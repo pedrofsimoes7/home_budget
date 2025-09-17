@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% block title %}Report{% endblock %}
+{% block content %}
+<h2 class="mb-4">Summary Report</h2>
+
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label class="form-label">Type:</label>
+        <select name="type" class="form-select">
+            <option value="">All</option>
+            <option value="income" {% if entry_type == 'income' %}selected{% endif %}>Income</option>
+            <option value="expense" {% if entry_type == 'expense' %}selected{% endif %}>Expense</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Category:</label>
+        <select name="category" class="form-select">
+            <option value="">All</option>
+            {% for cat in categories %}
+                <option value="{{ cat.name }}" {% if category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Order by Date:</label>
+        <select name="order" class="form-select">
+            <option value="desc" {% if order == "desc" %}selected{% endif %}>Newest first</option>
+            <option value="asc" {% if order == "asc" %}selected{% endif %}>Oldest first</option>
+        </select>
+    </div>
+    <div class="col-md-2 align-self-end">
+        <button type="submit" class="btn btn-success w-100">Filter</button>
+    </div>
+</form>
+
+<div class="bg-white border rounded p-3">
+    <canvas id="reportChart" height="200"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+fetch("{% url 'report_data' %}?" + new URLSearchParams(window.location.search))
+    .then(response => response.json())
+    .then(data => {
+        const incomeDates = Object.keys(data.income);
+        const expenseDates = Object.keys(data.expense);
+        const allDates = [...new Set([...incomeDates, ...expenseDates])]; // sem .sort()
+
+        const incomeData = allDates.map(date => parseFloat(data.income[date] || 0));
+        const expenseData = allDates.map(date => parseFloat(data.expense[date] || 0));
+
+        const ctx = document.getElementById('reportChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: allDates,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomeData,
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    },
+                    {
+                        label: 'Expense',
+                        data: expenseData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Value'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

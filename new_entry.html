@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block title %}New Entry{% endblock %}
+{% block content %}
+<h2 class="mb-3">Add New Entry</h2>
+<form method="post" class="border rounded p-4 bg-white shadow-sm">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary mt-3">Save</button>
+</form>
+{% endblock %}
